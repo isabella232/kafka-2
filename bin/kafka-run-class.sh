@@ -156,6 +156,19 @@ do
     CLASSPATH="$CLASSPATH":"$file"
   fi
 done
+
+# Set SENTRY_HOME if possible and add Sentry jars to classpath
+if [[ -z "$SENTRY_HOME" ]]; then
+  if [[ -d ${base_dir}/../sentry ]]; then
+    export SENTRY_HOME=`readlink -m ${base_dir}/../sentry`
+  fi
+fi
+if [[ -n "$SENTRY_HOME" ]]; then
+  for f in ${SENTRY_HOME}/lib/*.jar ${SENTRY_HOME}/lib/plugins/*.jar; do
+    export CLASSPATH=${CLASSPATH}:${f}
+  done
+fi
+
 shopt -u nullglob
 
 if [ -z "$CLASSPATH" ] ; then
@@ -298,6 +311,13 @@ CLASSPATH=${CLASSPATH#:}
 
 # If Cygwin is detected, classpath is converted to Windows format.
 (( CYGWIN )) && CLASSPATH=$(cygpath --path --mixed "${CLASSPATH}")
+
+# required for metrics servlet when using java 9 or higher
+# JAVA_MAJOR_VERSION retrieval is the same as above
+JAVA_MAJOR_VERSION=$($JAVA -version 2>&1 | sed -E -n 's/.* version "([0-9]*).*$/\1/p')
+if [[ "$JAVA_MAJOR_VERSION" -ge "9" ]]; then
+  KAFKA_OPTS="$KAFKA_OPTS --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED"
+fi
 
 # Launch mode
 if [ "x$DAEMON_MODE" = "xtrue" ]; then
