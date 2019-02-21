@@ -734,6 +734,7 @@ project(':core') {
     compile libs.jettyServer
     compile libs.jettyServlet
     compile libs.slf4jlog4j
+    compile libs.caffeine
       compile(libs.zkclient) {
           exclude module: 'zookeeper'
       }
