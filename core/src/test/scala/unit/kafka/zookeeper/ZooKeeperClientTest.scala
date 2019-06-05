@@ -19,7 +19,7 @@ package kafka.zookeeper
 import java.nio.charset.StandardCharsets
 import java.util.UUID
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
-import java.util.concurrent.{ArrayBlockingQueue, ConcurrentLinkedQueue, CountDownLatch, Executors, Semaphore, TimeUnit}
+import java.util.concurrent._
 
 import com.yammer.metrics.Metrics
 import com.yammer.metrics.core.{Gauge, Meter, MetricName}
@@ -31,7 +31,7 @@ import org.apache.zookeeper.Watcher.Event.{EventType, KeeperState}
 import org.apache.zookeeper.ZooKeeper.States
 import org.apache.zookeeper.{CreateMode, WatchedEvent, ZooDefs}
 import org.junit.Assert.{assertArrayEquals, assertEquals, assertFalse, assertTrue}
-import org.junit.{After, Before, Ignore, Test}
+import org.junit.{After, Before, Test}
 
 import scala.collection.JavaConverters._
 
@@ -59,16 +59,13 @@ class ZooKeeperClientTest extends ZooKeeperTestHarness {
     ZooKeeperTestHarness.verifyNoUnexpectedThreads("@After")
   }
 
-  // CDH is built with Zookeeper 3.4.5 which doesn't have the fix for this test to work.
-  // Reenable when CDH changes to Zookeeper 3.4.13 or higher.
-  @Ignore
   @Test
   def testUnresolvableConnectString(): Unit = {
     try {
       new ZooKeeperClient("some.invalid.hostname.foo.bar.local", zkSessionTimeout, connectionTimeoutMs = 10,
         Int.MaxValue, time, "testMetricGroup", "testMetricType")
     } catch {
-      case e: ZooKeeperClientTimeoutException =>
+      case e: IllegalArgumentException =>
         assertEquals("ZooKeeper client threads still running", Set.empty,  runningZkSendThreads)
     }
   }
